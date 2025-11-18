@@ -1,129 +1,172 @@
-# 🚀 Depth Estimation with StereoSGBM and LiDAR Calibration (ROS 2)
+## 🚀 Stereo Depth Estimation with LiDAR-Based Baseline Calibration (ROS2)
 
-This ROS 2 package, **`depth_estimation`**, implements real-time depth estimation from a rectified stereo camera pair using the **StereoSGBM** algorithm, enhanced with **Weighted Least Squares (WLS) filtering** and **Contrast Limited Adaptive Histogram Equalization (CLAHE)**.
-
-A key feature of this package is the **automatic scale calibration** of the stereo baseline using ground truth depth from an accompanying **LiDAR sensor (Velodyne)**, ensuring metric accuracy of the estimated point clouds.
+This repository implements a full stereo depth estimation pipeline using **OpenCV SGBM**, enhanced with a **one-time LiDAR-based baseline calibration** step to improve stereo depth accuracy. After calibration, the system runs **fully camera-only**, with no machine learning models.
 
 ---
 
-## 📦 Package Structure
+## 🚀 Features
 
-depth_estimation/ ├── config/ │ └── config.yaml # Main configuration for the depth_estimation_node ├── depth_estimation/ │ ├── depth_estimation.py # ROS 2 Node implementing the core logic │ └── utils.py # Utility functions for point cloud processing and evaluation ├── launch/ │ └── depth_estimation.launch.py # Launch file to start the node with parameters └── ... (standard ROS 2 files)
+- Stereo depth estimation (SGBM + WLS)
+- LiDAR-assisted stereo baseline correction  
+- Single calibration step → no LiDAR needed afterward  
+- Temporal filtering & CLAHE preprocessing
+- Left–Right consistency checking
+- Real-time ROS2 execution
+- 3D point cloud publishing
+- Built-in evaluation metrics:
+  - RMSE, Median, Chamfer distance
+  - Precision / Recall / F1
+  - GraphSIM, PointSSIM, PCA curvature features
+
+---
+
+## 📦 Project Structure
+
+depth_estimation/
+│
+├── depth_estimation.py # Main ROS2 node
+├── utils.py # Evaluation + utility functions
+├── config/ # Parameter files (YAML)
+├── launch/ # ROS2 launch files
+└── README.md # This file
 
 
 ---
 
-## ✨ Features
+## 🛠 Installation
 
-* **Stereo Matching:** Uses OpenCV's **StereoSGBM** (Semi-Global Block Matching) for efficient disparity computation.
-* **Quality Filtering:** Includes **WLS (Weighted Least Squares)** post-filtering for disparity refinement and **Left-Right Consistency (LRC)** checks.
-* **Preprocessing:** Implements **CLAHE** for robust feature matching, especially in low-contrast areas.
-* **Temporal Filtering:** Applies an adaptive temporal filter to the disparity map, using a quality score derived from LRC and valid pixel fraction to stabilize depth estimates over time.
-* **LiDAR-Stereo Calibration:** Automatically estimates and applies a **scale factor** to the stereo baseline ($B$) using matched LiDAR (ground truth) and stereo point correspondences. The scale estimation uses **RANSAC** and **Huber regression** for robustness.
-* **Comprehensive Evaluation:** Computes standard point cloud metrics (RMSE, Median, Chamfer Distance, Precision/Recall/F-Score) and advanced structural similarity metrics (**GraphSIM**, **PointSSIM**, **Curvature Similarity**) against ground truth LiDAR data.
-* **ROS 2 Integration:** Synchronizes five inputs (`left_image`, `right_image`, `left_info`, `right_info`, `velo_points`) using `ApproximateTimeSynchronizer`.
+### Dependencies
+
+- ROS2 Humble / Foxy
+- Python 3.8+
+- OpenCV + contrib
+- Open3D
+- SciPy
+- scikit-learn
+- message_filters
+- tf2_ros
+
+### Install ROS dependencies:
+
+```bash
+sudo apt install ros-${ROS_DISTRO}-cv-bridge \
+                 ros-${ROS_DISTRO}-image-transport \
+                 ros-${ROS_DISTRO}-tf2-ros \
+                 ros-${ROS_DISTRO}-message-filters
+
+```
+
+### Python dependencies:
+
+pip install opencv-python opencv-contrib-python
+pip install open3d scipy scikit-learn
+
+## ▶️ Running the Node
+
+Build:
+
+```bash
+colcon build --symlink-install
+```
+
+Run:
+
+```
+source install/setup.bash
+ros2 run depth_estimation depth_estimation_node
+```
+
+##📡 Subscribed Topics
+Topic	Type	Description
+/left/image/compressed	CompressedImage	Left image
+/right/image/compressed	CompressedImage	Right image
+/left/camera_info	CameraInfo	Left camera calibration
+/right/camera_info	CameraInfo	Right camera calibration
+/velodyne_points	PointCloud2	LiDAR cloud (used only for calibration)
+
+## 📤 Published Topics
+Topic	Type	Description
+/camera/depth/disparity	Image	Disparity visualization
+/stereo/depth_points	PointCloud2	Stereo-based point cloud
+/point_cloud/ground_truth	PointCloud2	LiDAR ground truth cloud
+
+## 🧠 How the Calibration Works
+
+## The calibration process runs only once:
+
+    Compute stereo disparity
+
+    Reproject disparity → 3D using the initial Q matrix
+
+    Transform LiDAR → camera frame
+
+    Find LiDAR ↔ stereo 3D correspondences
+
+    Solve for scale factor a using:
+
+        RANSAC
+
+        Huber-loss least-squares refinement
+
+    Update stereo baseline:
+    bnew=a⋅bold
+    bnew​=a⋅bold​
+
+    Recompute Q matrix
+
+    Continue inference using only stereo
+
+This removes long-term dependence on LiDAR and "corrects" the camera depth scale.
+📊 Example Evaluation Log Output
+
+Running LiDAR-based stereo scale calibration...
+Estimated scale factor: 0.9973
+Baseline updated: old=0.5323, new=0.5309
+
+Eval: RMSE=0.456m
+Median=0.120m
+F1_scores={0.2: 0.50, 0.5: 0.78, 0.9: 0.89}
+Chamfer=0.351m
+
+⚙️ Parameter Configuration
+
+All parameters can be changed via YAML or inline ROS commands:
+
+ros2 param set /depth_estimation_node sgbm.block_size 7
+
+Categories:
+
+    sgbm: stereo matcher tuning
+
+    wls: disparity filtering
+
+    preprocessing: CLAHE
+
+    postprocessing: cropping, temporal filtering
+
+    evaluation: RMSE, F1, Chamfer
+
+    debug: save point clouds, logs
+
+📷 Visualization
+<img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_14_19" src="https://github.com/user-attachments/assets/43d4fd59-1ce1-4d94-a2ce-8ca5c87b39e4" />
+<img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_16_34" src="https://github.com/user-attachments/assets/e34f3472-c745-4532-badf-1178484c29a1" />
+<img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_16_19" src="https://github.com/user-attachments/assets/b9bb55ec-f2bb-49df-8a71-2d0ef2e3c003" />
+<img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_15_44" src="https://github.com/user-attachments/assets/f4d088a8-9f1c-4ec5-a8a2-9a91d2022da2" />
+<img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_15_28" src="https://github.com/user-attachments/assets/176a84e9-acc6-47f3-a7f7-9d0115b4cb26" />
+
+
+🤝 Contributions
+
+Contributions, issues, and pull requests are welcome!
+📄 License
+
+MIT License (or your preferred license)
+
 
 ---
 
-## 🛠️ Implementation Details
+If you want a **shorter README**, **longer documentation**, or a **thesis chapter version**, just say:
 
-### 1. Disparity and Reprojection
-
-The core depth estimation uses the standard stereo pipeline:
-
-1.  **Image Preprocessing:** Grayscale conversion and optional CLAHE application.
-2.  **Disparity Calculation:**
-    $$D_{left} = \text{StereoSGBM}(\text{Left}, \text{Right})$$
-    $$D_{right} = \text{RightMatcher}(\text{Right}, \text{Left})$$
-3.  **WLS Filtering:** Refines the left disparity map using the right one:
-    $$D = \text{WLSFilter}(D_{left}, \text{Left Image}, D_{right})$$
-4.  **Temporal Filtering:** An adaptive filter stabilizes the disparity based on frame quality:
-    $$\alpha = \alpha_{\max} - (\alpha_{\max} - \alpha_{\min}) \times \text{Quality}$$
-    $$D_t = \alpha D_{t-1} + (1-\alpha) D_{t}$$
-5.  **3D Reprojection:** The final disparity map ($D$) is reprojected to a 3D point cloud using the **Q-matrix** derived from camera intrinsics ($K$) and the calibrated stereo baseline ($B_{\text{new}}$):
-    $$P_{3D} = \text{cv2.reprojectImageTo3D}(D, Q)$$
-
-### 2. Scale Calibration
-
-The calibration runs once when the node starts and **`self.calibrated`** is `False`:
-
-* It finds correspondences ($Z_s$ for stereo depth, $Z_l$ for LiDAR depth) by matching LiDAR points to the nearest stereo points.
-* The scale factor $a$ is estimated using robust optimization:
-    $$a = \text{estimate\_scale}(Z_s, Z_l)$$
-* The calibrated scale $a$ is then applied to the stereo baseline $B$ in the Q-matrix calculation:
-    $$B_{\text{new}} = a \cdot B_{\text{old}}$$
-    The Q-matrix is recomputed with $B_{\text{new}}$.
-
-### 3. Point Cloud Evaluation (in `utils.py`)
-
-The `utils.py` file provides a rich set of functions for evaluating the quality of the predicted point cloud against the ground truth.
-
-| Metric Group | Metric | Description |
-| :--- | :--- | :--- |
-| **Distance-Based** | **RMSE / Median** | Summary statistics of nearest-neighbor distances. |
-| | **Chamfer Distance** | The average symmetric nearest neighbor distance. |
-| | **Precision/Recall/F1** | Calculated for specified distance thresholds. |
-| **Normal-Based** | **GraphSIM** | Measures the alignment of local surface normals between point clouds. |
-| **Structure-Based** | **PointSSIM** | Compares local neighborhood statistics (mean, eigenvalues, structure index). |
-| | **Curvature Similarity** | Compares the local surface curvature (from PCA eigenvalues) of matched points. |
-
----
-
-## ⚙️ Configuration (`config/config.yaml`)
-
-The behavior of the node is governed by parameters loaded from `config.yaml`.
-
-# Relevant Parameters from config.yaml:
-
-    # --- StereoSGBM Parameters ---
-    sgbm:
-      num_disparities: 128
-      block_size: 5
-      p1_multiplier: 8
-      p2_multiplier: 32
-    
-    # --- WLS Filter Parameters ---
-    wls:
-      enable: true
-      lambda_val: 8000.0
-      sigma_color: 1.0
-
-    # Post processing
-    postprocessing:
-      temporal_filter_enable: true
-      cropping_min_z: 4.0      # Z-axis cropping (meters)
-      cropping_max_z: 50.0
-      downsample_enable: true
-      downsample_voxel_size: 0.2 # (meters) for evaluation
-    
-    # --- Evaluation ---
-    evaluation:
-      eval_enable: true
-      advance_eval_enable: false # Toggle for advanced structural metrics
-      thresholds : [0.2, 0.5, 0.9] # Distance thresholds for Precision/Recall
-
-🚀Usage
-
-Launching the Node
-
-The package is launched using the provided launch file, which automatically loads the parameters from config/config.yaml.
-Bash
-
-ros2 launch depth_estimation depth_estimation.launch.py
-
-Subscribed Topics
-
-The node uses an ApproximateTimeSynchronizer to subscribe to 5 topics:
-Topic Name	Type	Description
-topics.left_image	sensor_msgs/CompressedImage	Left camera image.
-topics.right_image	sensor_msgs/CompressedImage	Right camera image.
-topics.left_info	sensor_msgs/CameraInfo	Left camera intrinsics.
-topics.right_info	sensor_msgs/CameraInfo	Right camera intrinsics.
-topics.velo_points	sensor_msgs/PointCloud2	Ground truth LiDAR point cloud.
-
-Published Topics
-
-Topic Name	Type	Description
-topics.disparity_image	sensor_msgs/Image	Visualized, normalized disparity map.
-topics.stereo_pointcloud	sensor_msgs/PointCloud2	The final, scaled 3D point cloud from stereo estimation.
-topics.gt_pointcloud	sensor_msgs/PointCloud2	The filtered and cropped ground truth LiDAR point cloud (in camera frame).
+👉 *"Give me thesis format"* or  
+👉 *"Generate extended documentation"*
