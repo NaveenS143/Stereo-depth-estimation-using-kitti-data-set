@@ -24,12 +24,30 @@ This repository implements a full stereo depth estimation pipeline using **OpenC
 
 ```
 depth_estimation/
-│
-├── depth_estimation.py # Main ROS2 node
-├── utils.py # Evaluation + utility functions
-├── config/ # Parameter files (YAML)
-├── launch/ # ROS2 launch files
-└── README.md # This file
+├── config
+│   └── config.yaml
+├── depth_estimation
+│   ├── depth_estimation.py
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── depth_estimation.cpython-310.pyc
+│   │   ├── __init__.cpython-310.pyc
+│   │   └── utils.cpython-310.pyc
+│   └── utils.py
+├── launch
+│   └── depth_estimation.launch.py
+├── package.xml
+├── resource
+│   └── depth_estimation
+├── rviz
+│   └── depth_results_viz.rviz
+├── setup.cfg
+├── setup.py
+└── test
+    ├── test_copyright.py
+    ├── test_flake8.py
+    └── test_pep257.py
+
 ```
 
 ---
