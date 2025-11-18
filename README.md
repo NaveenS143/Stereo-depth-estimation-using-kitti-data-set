@@ -22,6 +22,7 @@ This repository implements a full stereo depth estimation pipeline using **OpenC
 
 ## 📦 Project Structure
 
+```
 depth_estimation/
 │
 ├── depth_estimation.py # Main ROS2 node
@@ -29,7 +30,7 @@ depth_estimation/
 ├── config/ # Parameter files (YAML)
 ├── launch/ # ROS2 launch files
 └── README.md # This file
-
+```
 
 ---
 
@@ -77,18 +78,23 @@ ros2 run depth_estimation depth_estimation_node
 ```
 
 ##📡 Subscribed Topics
+```
 Topic	Type	Description
 /left/image/compressed	CompressedImage	Left image
 /right/image/compressed	CompressedImage	Right image
 /left/camera_info	CameraInfo	Left camera calibration
 /right/camera_info	CameraInfo	Right camera calibration
 /velodyne_points	PointCloud2	LiDAR cloud (used only for calibration)
+```
 
 ## 📤 Published Topics
+
+```
 Topic	Type	Description
 /camera/depth/disparity	Image	Disparity visualization
 /stereo/depth_points	PointCloud2	Stereo-based point cloud
 /point_cloud/ground_truth	PointCloud2	LiDAR ground truth cloud
+```
 
 ## 🧠 How the Calibration Works
 
