@@ -117,7 +117,8 @@ Topic	Type	Description
     Continue inference using only stereo
 
 This removes long-term dependence on LiDAR and "corrects" the camera depth scale.
-📊 Example Evaluation Log Output
+
+## 📊 Example Evaluation Log Output
 
 Running LiDAR-based stereo scale calibration...
 Estimated scale factor: 0.9973
@@ -128,14 +129,14 @@ Median=0.120m
 F1_scores={0.2: 0.50, 0.5: 0.78, 0.9: 0.89}
 Chamfer=0.351m
 
-⚙️ Parameter Configuration
+## ⚙️ Parameter Configuration
 
 All parameters can be changed via YAML or inline ROS commands:
 
 ros2 param set /depth_estimation_node sgbm.block_size 7
 
 Categories:
-
+```
     sgbm: stereo matcher tuning
 
     wls: disparity filtering
@@ -147,8 +148,9 @@ Categories:
     evaluation: RMSE, F1, Chamfer
 
     debug: save point clouds, logs
+```
 
-📷 Visualization
+## 📷 Visualization
 <img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_14_19" src="https://github.com/user-attachments/assets/43d4fd59-1ce1-4d94-a2ce-8ca5c87b39e4" />
 <img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_16_34" src="https://github.com/user-attachments/assets/e34f3472-c745-4532-badf-1178484c29a1" />
 <img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_16_19" src="https://github.com/user-attachments/assets/b9bb55ec-f2bb-49df-8a71-2d0ef2e3c003" />
@@ -156,17 +158,11 @@ Categories:
 <img width="1088" height="858" alt="rviz_screenshot_2025_11_18-23_15_28" src="https://github.com/user-attachments/assets/176a84e9-acc6-47f3-a7f7-9d0115b4cb26" />
 
 
-🤝 Contributions
+## 🤝 Contributions
 
 Contributions, issues, and pull requests are welcome!
-📄 License
 
-MIT License (or your preferred license)
+## 📄 License
 
+MIT License 
 
----
-
-If you want a **shorter README**, **longer documentation**, or a **thesis chapter version**, just say:
-
-👉 *"Give me thesis format"* or  
-👉 *"Generate extended documentation"*
