@@ -1,0 +1,73 @@
+# Parameters for depth_estimation_node
+depth_estimation_node:
+  ros__parameters:
+
+    # --- Node Behavior ---
+    sync_time: 0.05 # (s) How often to run the processing loop
+
+    # --- Topic Names ---
+    topics:
+      left_image: "/kitti/camera_color_left/image_raw/compressed"
+      right_image: "/kitti/camera_color_right/image_raw/compressed"
+      left_info: "/kitti/camera_color_left/camera_info"
+      right_info: "/kitti/camera_color_right/camera_info"
+      velo_points: "/kitti/velo/pointcloud"
+      disparity_image: "/camera/depth/disparity"
+      stereo_pointcloud: "/stereo/depth_points"
+      gt_pointcloud: "/point_cloud/ground_truth"
+
+    # --- TF Frame Names ---
+    tf_frames:
+      camera: "camera_color_left"
+      velo: "velo_link"
+
+    # --- StereoSGBM Parameters ---
+    sgbm:
+      num_disparities: 128       # Must be divisible by 16
+      block_size: 5             # Must be odd
+      min_disparity: 0
+      p1_multiplier: 8          # P1 = p1_multiplier * 3 * block_size**2
+      p2_multiplier: 32         # P2 = p2_multiplier * 3 * block_size**2
+      disp12_max_diff: 1
+      uniqueness_ratio: 50
+      speckle_window_size: 100
+      speckle_range: 32
+
+    # --- WLS Filter Parameters ---
+    wls:
+      enable: true
+      lambda_val: 8000.0
+      sigma_color: 1.0
+
+    # Preprocessing 
+    preprocessing:
+      clahe_enable: true
+      clahe_clip_limit: 2.0
+      clahe_tile_grid_size: [8, 8]
+
+    #  Post processing
+    postprocessing:
+      temporal_filter_enable: true
+      temporal_alpha_min: 0.2
+      temporal_alpha_max: 0.9
+      temporal_quality_lrc_weight: 0.7
+      temporal_lrc_threshold: 1.0
+      reprojection_min_disparity: 2.0
+      cropping_min_z: 4.0
+      cropping_max_z: 50.0
+      cropping_min_y: -0.3
+      downsample_enable: true
+      downsample_voxel_size: 0.2
+
+    # --- Evaluation ---
+    evaluation:
+      eval_enable: true
+      advance_eval_enable: false
+      thresholds : [0.2, 0.5, 0.9]
+
+    # --- Debugging & Logging ---
+    debug:
+      enable: false
+      root_dir: "/depth_estimation_debug/" # Relative to os.getcwd()
+      pcd_write_ascii: true
+      logging_period: 2.0         # (s)
